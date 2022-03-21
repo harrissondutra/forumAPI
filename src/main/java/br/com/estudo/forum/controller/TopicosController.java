@@ -8,6 +8,11 @@ import br.com.estudo.forum.models.Topico;
 import br.com.estudo.forum.repository.CursoRepository;
 import br.com.estudo.forum.repository.TopicoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -29,12 +34,14 @@ public class TopicosController {
     private CursoRepository cursoRepository;
 
     @GetMapping //Filtra curso por nome, ou trás todos (ALL).
-    public List<TopicoDto> listaTopico(String nomeCurso){
+    public Page<TopicoDto> listaTopico(@RequestParam(required = false) String nomeCurso,
+                                       @PageableDefault(sort = "id", direction = Sort.Direction.ASC, page = 0, size = 10) Pageable page){
+
         if(nomeCurso == null) {
-            List<Topico> topicos = topicoRepository.findAll();
+            Page<Topico> topicos = topicoRepository.findAll(page);
             return TopicoDto.converter(topicos);
         }else{
-            List<Topico> topicos = topicoRepository.findByCursoNome(nomeCurso);
+            Page<Topico> topicos = topicoRepository.findByCursoNome(nomeCurso, page);
             return TopicoDto.converter(topicos);
         }
     }
@@ -76,7 +83,7 @@ public class TopicosController {
 
     @DeleteMapping("/{id}")
     @Transactional
-    public ResponseEntity<?> remover(@PathVariable Long id){
+    public ResponseEntity<?> removerTopico(@PathVariable Long id){
         Optional<Topico> optional = topicoRepository.findById(id);
         if(optional.isPresent()) {
             topicoRepository.deleteById(id);
